@@ -99,10 +99,11 @@ EOF
 chmod +x /retain.sh
 echo "=> Retain script created"
 
-ln -s /restore.sh /usr/bin/restore
-ln -s /backup.sh /usr/bin/backup
-ln -s /listbackups.sh /usr/bin/listbackups
-ln -s /retain.sh /usr/bin/retain
+# symlinks for easy access; -f overwrites any existing links so this is safe across container restarts
+ln -sf /restore.sh /usr/bin/restore
+ln -sf /backup.sh /usr/bin/backup
+ln -sf /listbackups.sh /usr/bin/listbackups
+ln -sf /retain.sh /usr/bin/retain
 
 touch /mongo_backup.log
 
