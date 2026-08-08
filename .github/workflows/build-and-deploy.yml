@@ -1,4 +1,4 @@
-name: docker-publish
+name: Build and deploy
 
 on:
   push:
