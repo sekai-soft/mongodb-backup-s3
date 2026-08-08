@@ -1,4 +1,4 @@
-FROM mongo:4.1
+FROM mongo:8.2
 
 ENV CRON_TIME="0 3 * * *" \
   TZ=Australia/Adelaide \

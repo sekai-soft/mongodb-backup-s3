@@ -7,10 +7,14 @@ MONGODB_PORT=${MONGODB_PORT_1_27017_TCP_PORT:-${MONGODB_PORT}}
 MONGODB_USER=${MONGODB_USER:-${MONGODB_ENV_MONGODB_USER}}
 MONGODB_PASS=${MONGODB_PASS:-${MONGODB_ENV_MONGODB_PASS}}
 
-S3PATH="s3://$BUCKET/$BACKUP_FOLDER"
+S3PATH="s3://$S3_BUCKET/$BACKUP_FOLDER"
 
-[[ ( -n "${ENDPOINT_URL}" ) ]] && ENDPOINT_STR=" --endpoint-url ${ENDPOINT_URL}"
-[[ ( -n "${BUCKET_REGION}" ) ]] && REGION_STR=" --region ${BUCKET_REGION}"
+[[ ( -n "${S3_ENDPOINT}" ) ]] && ENDPOINT_STR=" --endpoint-url ${S3_ENDPOINT}"
+[[ ( -n "${S3_REGION}" ) ]] && REGION_STR=" --region ${S3_REGION}"
+
+# Map S3_* credentials to the AWS_* vars the aws CLI expects
+[[ ( -n "${S3_ACCESS_KEY_ID}" ) ]] && export AWS_ACCESS_KEY_ID="${S3_ACCESS_KEY_ID}"
+[[ ( -n "${S3_SECRET_ACCESS_KEY}" ) ]] && export AWS_SECRET_ACCESS_KEY="${S3_SECRET_ACCESS_KEY}"
 
 [[ ( -z "${MONGODB_USER}" ) && ( -n "${MONGODB_PASS}" ) ]] && MONGODB_USER='admin'
 

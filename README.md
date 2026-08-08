@@ -3,25 +3,12 @@
 This image runs `mongodump` to backup data to an AWS S3 bucket. It can be run on a cron timer or
 immediate when the container is launched.
 
-We support custom S3 compatable storage by providing your own endpoint.
-
-Limiting the (configurable) number of retained backups is also supported.
-
-
-## Forked from [zhonghuiwen/mongodb-backup-s3](https://github.com/zhonghuiwen/mongodb-backup-s3)
-
-This fork adds:
- - ability to run the retain script outside of cron
- - updated mongo image base
- - reduced image size
- - instructions for running as an ECS task on AWS Fargate
-
 ## Usage:
 ```
 docker run -d \
-  --env AWS_ACCESS_KEY_ID=awsaccesskeyid \
-  --env AWS_SECRET_ACCESS_KEY=awssecretaccesskey \
-  --env BUCKET=mybucketname \
+  --env S3_ACCESS_KEY_ID=awsaccesskeyid \
+  --env S3_SECRET_ACCESS_KEY=awssecretaccesskey \
+  --env S3_BUCKET=mybucketname \
   --env MONGODB_HOST=mongodb.host \
   --env MONGODB_PORT=27017 \
   --env MONGODB_USER=admin \
@@ -32,15 +19,15 @@ docker run -d \
 
 If your bucket is not in a standard region and you get `A client error (PermanentRedirect) occurred
 when calling the PutObject operation: The bucket you are attempting to access must be addressed
-using the specified endpoint. Please send all future requests to this endpoint` use `BUCKET_REGION`
+using the specified endpoint. Please send all future requests to this endpoint` use `S3_REGION`
 env var like this (assume your region is `ap-southeast-2`):
 
 ```
 docker run -d \
-  --env AWS_ACCESS_KEY_ID=myaccesskeyid \
-  --env AWS_SECRET_ACCESS_KEY=mysecretaccesskey \
-  --env BUCKET=mybucketname \
-  --env BUCKET_REGION=ap-southeast-2 \
+  --env S3_ACCESS_KEY_ID=myaccesskeyid \
+  --env S3_SECRET_ACCESS_KEY=mysecretaccesskey \
+  --env S3_BUCKET=mybucketname \
+  --env S3_REGION=ap-southeast-2 \
   --env BACKUP_FOLDER=a/sub/folder/path/ \
   --env INIT_BACKUP=true \
   ternandsparrow/mongodb-backup-s3:1.2.2
@@ -55,11 +42,11 @@ mongodbbackup:
   links:
     - mongodb
   environment:
-    - AWS_ACCESS_KEY_ID=myaccesskeyid
-    - AWS_SECRET_ACCESS_KEY=mysecretaccesskey
-    - BUCKET=my-s3-bucket
+    - S3_ACCESS_KEY_ID=myaccesskeyid
+    - S3_SECRET_ACCESS_KEY=mysecretaccesskey
+    - S3_BUCKET=my-s3-bucket
     - BACKUP_FOLDER=prod/db/
-    - ENDPOINT_URL=https://s3.example.com
+    - S3_ENDPOINT=https://s3.example.com
     - RETAIN_COUNT=5
   restart: always
 ```
@@ -71,17 +58,13 @@ mongodbbackup:
   links:
     - mongodb
   environment:
-    - AWS_ACCESS_KEY_ID=myaccesskeyid
-    - AWS_SECRET_ACCESS_KEY=mysecretaccesskey
-    - BUCKET=my-s3-bucket
+    - S3_ACCESS_KEY_ID=myaccesskeyid
+    - S3_SECRET_ACCESS_KEY=mysecretaccesskey
+    - S3_BUCKET=my-s3-bucket
     - BACKUP_FOLDER=prod/db/
     - INIT_RESTORE=true
     - DISABLE_CRON=true
 ```
-
-## Running on AWS ECS Fargate
-
-See the instructions in [aws-deploy/README.md](./aws-deploy/README.md).
 
 ## Example AWS IAM policy
 
@@ -111,15 +94,15 @@ This policy contains the required permissions for this container to operate. Rep
 
 ## Parameters
 
-`AWS_ACCESS_KEY_ID` - your aws access key id (for your s3 bucket)
+`S3_ACCESS_KEY_ID` - your aws access key id (for your s3 bucket)
 
-`AWS_SECRET_ACCESS_KEY`: - your aws secret access key (for your s3 bucket)
+`S3_SECRET_ACCESS_KEY`: - your aws secret access key (for your s3 bucket)
 
-`BUCKET`: - your s3 bucket
+`S3_BUCKET`: - your s3 bucket
 
-`BUCKET_REGION`: - your s3 bucket' region (eg `us-east-2` for Ohio). Optional. Add if you get an error `A client error (PermanentRedirect)`
+`S3_REGION`: - your s3 bucket' region (eg `us-east-2` for Ohio). Optional. Add if you get an error `A client error (PermanentRedirect)`
 
-`ENDPOINT_URL`: - your custom S3 endpoint (eg `https://radosgw.example.com` )
+`S3_ENDPOINT`: - your custom S3 endpoint (eg `https://radosgw.example.com` )
 
 `BACKUP_FOLDER`: - name of folder or path to put backups (eg `myapp/db_backups/`). defaults to root of bucket.
 
