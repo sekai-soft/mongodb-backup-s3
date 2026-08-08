@@ -127,4 +127,7 @@ if [ -z "${DISABLE_CRON}" ]; then
     crontab  /crontab.conf
     echo "=> Running cron job"
     cron && tail -f /mongo_backup.log
+else
+    echo "=> Cron disabled; container staying alive"
+    tail -f /dev/null
 fi
