@@ -7,6 +7,11 @@ MONGODB_PORT=${MONGODB_PORT_1_27017_TCP_PORT:-${MONGODB_PORT}}
 MONGODB_USER=${MONGODB_USER:-${MONGODB_ENV_MONGODB_USER}}
 MONGODB_PASS=${MONGODB_PASS:-${MONGODB_ENV_MONGODB_PASS}}
 
+# BACKUP_FOLDER must end with a trailing slash
+if [[ -n "${BACKUP_FOLDER}" && "${BACKUP_FOLDER}" != */ ]]; then
+  echo "BACKUP_FOLDER must end with a trailing slash (got '${BACKUP_FOLDER}')" >&2
+  exit 1
+fi
 S3PATH="s3://$S3_BUCKET/$BACKUP_FOLDER"
 
 [[ ( -n "${S3_ENDPOINT}" ) ]] && ENDPOINT_STR=" --endpoint-url ${S3_ENDPOINT}"
@@ -26,7 +31,7 @@ S3PATH="s3://$S3_BUCKET/$BACKUP_FOLDER"
 RETAIN_COUNT_STR="7"
 [[ ( -n "${RETAIN_COUNT}" ) ]] && [[ ${RETAIN_COUNT} =~ ^[0-9]+$ ]] && RETAIN_COUNT_STR="${RETAIN_COUNT}"
 
-# Export AWS Credentials into env file for cron job
+# Export AWS credentials into env file for cron and the generated scripts
 printenv | sed 's/^\([a-zA-Z0-9_]*\)=\(.*\)$/export \1="\2"/g' | grep -E "^export AWS" > /root/project_env.sh
 chmod +x /root/project_env.sh
 
@@ -34,6 +39,7 @@ echo "=> Creating backup script"
 rm -f /backup.sh
 cat <<EOF >> /backup.sh
 #!/bin/bash
+. /root/project_env.sh
 TIMESTAMP=\`/bin/date +"%Y%m%dT%H%M%S"\`
 BACKUP_NAME=\${TIMESTAMP}.dump.gz
 S3BACKUP=${S3PATH}\${BACKUP_NAME}
@@ -54,6 +60,7 @@ echo "=> Creating restore script"
 rm -f /restore.sh
 cat <<EOF >> /restore.sh
 #!/bin/bash
+. /root/project_env.sh
 if [[( -n "\${1}" )]]; then
     RESTORE_ME=\${1}.dump.gz
 else
@@ -76,6 +83,7 @@ echo "=> Creating list script"
 rm -f /listbackups.sh
 cat <<EOF >> /listbackups.sh
 #!/bin/bash
+. /root/project_env.sh
 aws s3 ls ${S3PATH} ${REGION_STR} ${ENDPOINT_STR}
 EOF
 chmod +x /listbackups.sh
@@ -85,6 +93,7 @@ echo "=> Creating retaing script"
 rm -f /retain.sh
 cat <<EOF >> /retain.sh
 #!/bin/bash
+. /root/project_env.sh
 if [[ \$(aws s3 ls ${S3PATH} ${REGION_STR} ${ENDPOINT_STR} | grep '\.dump\.gz' | wc -l) -gt ${RETAIN_COUNT_STR} ]]; then
     echo "retaining backups"
     aws s3 ls ${S3PATH} ${REGION_STR} ${ENDPOINT_STR} | grep '\.dump\.gz' | sort | head -n -${RETAIN_COUNT_STR} |  awk '{print \$4}' | while read line
